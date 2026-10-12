@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QR Studio</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:linear-gradient(135deg,#fff1f6,#fbcfe8 50%,#f9a8d4);--card:rgba(255,255,255,.72);--tx:#500724;--ac:#ec4899;--ac2:#be185d;--line:#f9a8d4}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui,sans-serif;color:var(--tx);background:#fbcfe8;background-image:var(--bg);background-attachment:fixed;padding:22px 14px}
+.wrap{max-width:860px;margin:auto}
+h1{margin:0 0 4px;font-size:clamp(26px,5vw,38px);color:var(--ac2)}
+.sub{opacity:.8;margin:0 0 18px}
+.card{background:var(--card);backdrop-filter:blur(14px);border:1px solid #fff;border-radius:22px;padding:20px;box-shadow:0 12px 34px #be185d26}
+.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:0;border-radius:999px;padding:8px 14px;cursor:pointer;background:#fce7f3;color:var(--ac2);font-weight:600}
+.tabs button.on{background:var(--ac);color:#fff}
+label{display:block;font-size:13px;margin:10px 0 4px;font-weight:600}
+input[type=text],input[type=email],input[type=password],input[type=tel],input[type=url],textarea,select{width:100%;padding:11px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:#3b0a21;font:inherit}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--ac);border-color:var(--ac)}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:12px 18px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;font-size:15px}
+.btn.alt{background:#fce7f3;color:var(--ac2)}
+.btn.full{width:100%;margin-top:14px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.out{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+#qrbox{background:#fff;padding:14px;border-radius:16px;min-height:220px;min-width:220px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px #be185d33}
+#qrbox img,#qrbox canvas{max-width:100%;height:auto}
+.hint{font-size:12.5px;opacity:.85;line-height:1.45}
+.msg{font-size:13px;min-height:18px;color:var(--ac2);font-weight:600}
+.hide{display:none!important}
+.drop{border:2px dashed var(--ac);border-radius:14px;padding:18px;text-align:center;cursor:pointer;background:#fff7fb}
+.auth{max-width:440px;margin:30px auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.sw{display:flex;gap:8px;margin:6px 0 2px}
+.sw button{width:30px;height:30px;border-radius:50%;border:2px solid #fff;cursor:pointer;box-shadow:0 2px 6px #0003}
+a.link{color:var(--ac2);font-weight:700;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- REGISTRATION / LOGIN -->
+<div id="authView" class="auth">
+<h1>▦ QR Studio</h1>
+<p class="sub" id="authSub">Create your free account to start making QR codes.</p>
+<div class="card">
+<div id="regFields">
+<label>Full name</label><input type="text" id="rn" placeholder="e.g. Priya Shah" autocomplete="name">
+<label>Phone number</label><input type="tel" id="rp" placeholder="10-digit mobile number" autocomplete="tel">
+</div>
+<label>Email</label><input type="email" id="re" placeholder="you@example.com" autocomplete="email">
+<label>Password</label><input type="password" id="rw" placeholder="At least 6 characters" autocomplete="new-password">
+<div id="regFields2"><label>Confirm password</label><input type="password" id="rc" placeholder="Re-enter password"></div>
+<label id="agreeL" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="ra"> I agree to the terms &amp; privacy policy</label>
+<button class="btn full" id="authBtn">Create account</button>
+<p class="msg" id="authMsg"></p>
+<p class="hint" style="text-align:center"><span id="swTxt">Already registered?</span> <a class="link" id="swLink">Log in</a></p>
+<p class="hint">Accounts are saved only in this browser (no server).</p>
+</div>
+</div>
+
+<!-- QR APP -->
+<div id="appView" class="hide">
+<div class="top"><div><h1>▦ QR Studio</h1><p class="sub" id="hello" style="margin:0"></p></div><button class="btn alt" id="logout">Log out</button></div>
+<p class="sub">Turn text, links, Wi‑Fi details or files into a QR code.</p>
+<div class="grid">
+<div class="card">
+<div class="tabs" id="tabs"></div>
+<div data-p="text"><label>Your text</label><textarea id="text" placeholder="Type your text here..."></textarea></div>
+<div data-p="url" class="hide"><label>Website link</label><input type="url" id="url" placeholder="https://example.com"></div>
+<div data-p="wifi" class="hide">
+<label>Wi‑Fi name (SSID)</label><input type="text" id="ssid">
+<label>Password</label><input type="text" id="wpass">
+<label>Security</label><select id="wsec"><option>WPA</option><option>WEP</option><option value="nopass">None</option></select></div>
+<div data-p="contact" class="hide">
+<label>Phone</label><input type="text" id="ph" placeholder="+91...">
+<label>Email</label><input type="email" id="em"></div>
+<div data-p="file" class="hide">
+<div class="drop" id="drop">📁 Choose a file (PDF, image, doc, txt)</div>
+<input type="file" id="file" class="hide">
+<p class="hint" id="finfo"></p>
+<label>Public link to your PDF / image / document (Google Drive, Dropbox, etc.)</label>
+<input type="url" id="flink" placeholder="https://drive.google.com/...">
+<p class="hint">⚠ A QR code holds only about 2,900 characters, so large files can't be stored inside it. Upload your file to Drive, set it to "Anyone with the link", then paste the link here – scanning the QR will open the file. Small .txt files are encoded directly.</p></div>
+<label>Pink shades</label>
+<div class="sw" id="sw"></div>
+<div class="row" style="margin-top:8px">
+<div><label>QR color</label><input type="color" id="fg" value="#9d174d"></div>
+<div><label>Background</label><input type="color" id="bg" value="#ffffff"></div>
+<div style="flex:1;min-width:120px"><label>Size: <span id="sv">256</span>px</label><input type="range" id="size" min="160" max="400" value="256"></div>
+</div>
+<div class="row" style="margin-top:14px">
+<button class="btn" id="gen">✨ Generate QR</button>
+<button class="btn alt" id="clr">Clear</button>
+</div>
+<p class="msg" id="msg"></p>
+</div>
+<div class="card out">
+<div id="qrbox"><span class="hint">Your QR code will appear here</span></div>
+<div class="row" style="justify-content:center">
+<button class="btn" id="dl" disabled>⬇ Download PNG</button>
+<button class="btn alt" id="cp" disabled>Copy</button>
+</div>
+<p class="hint">Tip: a dark QR on a light background always scans best.</p>
+</div>
+</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var $=function(i){return document.getElementById(i)};
+var mem={};
+function sg(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}
+function ss(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
+function sd(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
+function users(){try{return JSON.parse(sg('qrs_users')||'{}')}catch(e){return {}}}
+function hash(s){if(window.crypto&&crypto.subtle){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')})}return Promise.resolve(btoa(unescape(encodeURIComponent(s))))}
+
+/* ---------- auth ---------- */
+var login=false;
+function authMode(){
+['regFields','regFields2','agreeL'].forEach(function(i){$(i).classList.toggle('hide',login)});
+$('authBtn').textContent=login?'Log in':'Create account';
+$('authSub').textContent=login?'Welcome back! Log in to continue.':'Create your free account to start making QR codes.';
+$('swTxt').textContent=login?'New here?':'Already registered?';
+$('swLink').textContent=login?'Register':'Log in';$('authMsg').textContent=''}
+$('swLink').onclick=function(){login=!login;authMode()};
+function enter(u){$('authView').classList.add('hide');$('appView').classList.remove('hide');$('hello').textContent='Hello, '+u.name+' 💗'}
+$('authBtn').onclick=function(){
+var m=$('authMsg'),e=$('re').value.trim().toLowerCase(),p=$('rw').value,all=users();m.textContent='';
+if(!/^\S+@\S+\.\S+$/.test(e)){m.textContent='Enter a valid email address.';return}
+if(p.length<6){m.textContent='Password must be at least 6 characters.';return}
+if(login){var u=all[e];if(!u){m.textContent='No account found. Please register first.';return}
+hash(p).then(function(h){if(h!==u.h){m.textContent='Incorrect password.';return}ss('qrs_session',e);enter(u)});return}
+var n=$('rn').value.trim(),ph=$('rp').value.replace(/\D/g,'');
+if(n.length<2){m.textContent='Please enter your full name.';return}
+if(ph.length<10){m.textContent='Enter a valid 10-digit phone number.';return}
+if(p!==$('rc').value){m.textContent='Passwords do not match.';return}
+if(!$('ra').checked){m.textContent='Please accept the terms to continue.';return}
+if(all[e]){m.textContent='This email is already registered. Please log in.';return}
+hash(p).then(function(h){var u={name:n,phone:ph,h:h};all[e]=u;ss('qrs_users',JSON.stringify(all));ss('qrs_session',e);enter(u)})};
+$('logout').onclick=function(){sd('qrs_session');$('appView').classList.add('hide');$('authView').classList.remove('hide');login=true;authMode()};
+(function(){var s=sg('qrs_session'),u=users()[s];if(u){enter(u)}})();
+
+/* ---------- QR app ---------- */
+var mode='text',fileText='';
+var tabs=[['text','Text'],['url','Link'],['wifi','Wi‑Fi'],['contact','Contact'],['file','File']];
+tabs.forEach(function(t){var b=document.createElement('button');b.textContent=t[1];b.dataset.m=t[0];b.onclick=function(){mode=t[0];sync()};$('tabs').appendChild(b)});
+[['#9d174d','Deep rose'],['#db2777','Hot pink'],['#be123c','Raspberry'],['#a21caf','Orchid']].forEach(function(c){var b=document.createElement('button');b.style.background=c[0];b.title=c[1];
+b.onclick=function(){$('fg').value=c[0];if($('qrbox').querySelector('canvas'))make()};$('sw').appendChild(b)});
+function sync(){document.querySelectorAll('[data-p]').forEach(function(d){d.classList.toggle('hide',d.dataset.p!==mode)});
+document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.m===mode)})}
+sync();
+$('drop').onclick=function(){$('file').click()};
+$('file').onchange=function(){var f=this.files[0];if(!f)return;fileText='';
+var info=f.name+' ('+Math.round(f.size/1024)+' KB)';
+if(f.type.indexOf('text')===0||/\.(txt|md|csv)$/i.test(f.name)){var r=new FileReader();
+r.onload=function(){fileText=r.result;$('finfo').textContent=info+' – text file, will be encoded directly in the QR'};r.readAsText(f)}
+else $('finfo').textContent=info+' – for this file type, paste a public link below.'};
+$('size').oninput=function(){$('sv').textContent=this.value};
+function payload(){
+if(mode==='text')return $('text').value.trim();
+if(mode==='url'){var u=$('url').value.trim();return u&&!/^https?:\/\//i.test(u)?'https://'+u:u}
+if(mode==='wifi'){var s=$('ssid').value;return s?'WIFI:T:'+$('wsec').value+';S:'+s+';P:'+$('wpass').value+';;':''}
+if(mode==='contact'){var p=$('ph').value.trim(),e=$('em').value.trim();return p?'tel:'+p:(e?'mailto:'+e:'')}
+if(mode==='file')return $('flink').value.trim()||fileText.trim()}
+function make(){
+var d=payload(),m=$('msg');m.textContent='';
+if(!d){m.textContent='Please enter something first 🙂';return}
+var box=$('qrbox');box.innerHTML='';
+try{new QRCode(box,{text:d,width:+$('size').value,height:+$('size').value,colorDark:$('fg').value,colorLight:$('bg').value,
+correctLevel:d.length>600?QRCode.CorrectLevel.L:QRCode.CorrectLevel.H});
+box.style.background=$('bg').value;$('dl').disabled=$('cp').disabled=false}
+catch(e){box.innerHTML='<span class="hint">This data is too large for a QR code.</span>';m.textContent='Max ~2,900 characters. Use a link instead.';$('dl').disabled=$('cp').disabled=true}}
+function cv(){var c=$('qrbox').querySelector('canvas');if(!c)return null;var p=24,o=document.createElement('canvas');
+o.width=c.width+p*2;o.height=c.height+p*2;var x=o.getContext('2d');x.fillStyle=$('bg').value;x.fillRect(0,0,o.width,o.height);x.drawImage(c,p,p);return o}
+$('gen').onclick=make;
+$('clr').onclick=function(){['text','url','ssid','wpass','ph','em','flink'].forEach(function(i){$(i).value=''});fileText='';$('finfo').textContent='';
+$('qrbox').innerHTML='<span class="hint">Your QR code will appear here</span>';$('dl').disabled=$('cp').disabled=true;$('msg').textContent=''};
+$('dl').onclick=function(){var o=cv();if(!o)return;var a=document.createElement('a');a.download='qr-code.png';a.href=o.toDataURL('image/png');a.click()};
+$('cp').onclick=function(){var o=cv();if(!o)return;o.toBlob(function(b){
+try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(function(){$('msg').textContent='Copied to clipboard ✅'},function(){$('msg').textContent='Copy failed, please use Download.'})}
+catch(e){$('msg').textContent='Copy failed, please use Download.'}})};
+document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='Enter'&&!$('appView').classList.contains('hide'))make()});
+</script>
+</body>
+</html>
